@@ -19,14 +19,23 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	rest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/leaderelection"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	"k8s.io/client-go/tools/record"
 
 	_ "github.com/jetstack-experimental/cert-manager/pkg/apis/certmanager/install"
 	"github.com/jetstack-experimental/cert-manager/pkg/client"
@@ -39,9 +48,14 @@ import (
 	logpkg "github.com/jetstack-experimental/cert-manager/pkg/log"
 )
 
+const (
+	agentName = "cert-manager-controller"
+)
+
 var (
 	apiServerHost = flag.String("apiserver", "", "optional API server host address")
 	namespace     = flag.String("namespace", "", "optional namespace to operate within")
+	podNamespace  = flag.String("pod-namespace", "", "the namespace the cert-manager pod runs within")
 )
 
 func main() {
@@ -54,14 +68,63 @@ func main() {
 		log.Fatalf("error getting in-cluster config: %s", err.Error())
 	}
 
-	if err := registerCRDResources(cfg); err != nil {
-		log.Fatalf("error registering custom resource definition with API server: %s", err.Error())
-	}
-
 	cl, err := kubernetes.NewForConfig(cfg)
 
 	if err != nil {
 		log.Fatalf("error creating kubernetes clientset: %s", err.Error())
+	}
+
+	eventBroadcaster := record.NewBroadcaster()
+	eventBroadcaster.StartLogging(log.Printf)
+	eventBroadcaster.StartRecordingToSink(&corev1client.EventSinkImpl{Interface: cl.Core().Events("")})
+	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: agentName})
+
+	id, err := os.Hostname()
+	if err != nil {
+		log.Fatalf("error getting hostname: %s", err.Error())
+	}
+
+	stopCh := make(chan struct{})
+	le, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
+		Lock: &resourcelock.EndpointsLock{
+			EndpointsMeta: metav1.ObjectMeta{
+				Namespace: *podNamespace,
+				Name:      "cert-manager",
+			},
+			Client: cl.CoreV1(),
+			LockConfig: resourcelock.ResourceLockConfig{
+				Identity:      id + "-external-cert-manager",
+				EventRecorder: recorder,
+			},
+		},
+		LeaseDuration: 60 * time.Second,
+		RenewDeadline: 30 * time.Second,
+		RetryPeriod:   5 * time.Second,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(stop <-chan struct{}) {
+				go func() {
+					defer close(stopCh)
+					<-stop
+				}()
+				start(cfg, cl, stopCh)
+			},
+			OnStoppedLeading: func() {
+				log.Printf("lost leadership lock. signalling workers to exit...")
+				close(stopCh)
+				log.Printf("workers drained. exiting...")
+				os.Exit(0)
+			},
+		},
+	})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	le.Run()
+}
+
+func start(cfg *rest.Config, cl kubernetes.Interface, stopCh <-chan struct{}) {
+	if err := registerCRDResources(cfg); err != nil {
+		log.Fatalf("error registering custom resource definition with API server: %s", err.Error())
 	}
 
 	cmCl, err := client.NewForConfig(cfg)
@@ -86,7 +149,6 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	stopCh := make(chan struct{})
 	factory.Start(stopCh)
 	cmFactory.Start(stopCh)
 

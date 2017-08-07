@@ -19,7 +19,7 @@ limitations under the License.
 package internalversion
 
 import (
-	internalclientset "github.com/jetstack-experimental/cert-manager/pkg/client/internalclientset"
+	internalversion "github.com/jetstack-experimental/cert-manager/pkg/client/internalversion"
 	internalinterfaces "github.com/jetstack-experimental/cert-manager/pkg/informers/internalversion/internalinterfaces"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,7 +30,7 @@ import (
 )
 
 type sharedInformerFactory struct {
-	client        internalclientset.Interface
+	client        internalversion.Interface
 	lock          sync.Mutex
 	defaultResync time.Duration
 
@@ -41,7 +41,7 @@ type sharedInformerFactory struct {
 }
 
 // NewSharedInformerFactory constructs a new instance of sharedInformerFactory
-func NewSharedInformerFactory(client internalclientset.Interface, defaultResync time.Duration) SharedInformerFactory {
+func NewSharedInformerFactory(client internalversion.Interface, defaultResync time.Duration) SharedInformerFactory {
 	return &sharedInformerFactory{
 		client:           client,
 		defaultResync:    defaultResync,

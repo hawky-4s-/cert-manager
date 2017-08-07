@@ -17,9 +17,9 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/jetstack-experimental/cert-manager/pkg/client/internalclientset"
-	certmanagerinternalversion "github.com/jetstack-experimental/cert-manager/pkg/client/internalclientset/typed/certmanager/internalversion"
-	fakecertmanagerinternalversion "github.com/jetstack-experimental/cert-manager/pkg/client/internalclientset/typed/certmanager/internalversion/fake"
+	clientset "github.com/jetstack-experimental/cert-manager/pkg/client/internalversion"
+	certmanagerinternalversion "github.com/jetstack-experimental/cert-manager/pkg/client/internalversion/typed/certmanager/internalversion"
+	fakecertmanagerinternalversion "github.com/jetstack-experimental/cert-manager/pkg/client/internalversion/typed/certmanager/internalversion/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -60,7 +60,12 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// Certmanager retrieves the CertmanagerClient
-func (c *Clientset) Certmanager() certmanagerinternalversion.CertmanagerInterface {
-	return &fakecertmanagerinternalversion.FakeCertmanager{Fake: &c.Fake}
+// CertmanagerInternalversion retrieves the CertmanagerInternalversionClient
+func (c *Clientset) CertmanagerInternalversion() certmanagerinternalversion.CertmanagerInternalversionInterface {
+	return &fakecertmanagerinternalversion.FakeCertmanagerInternalversion{Fake: &c.Fake}
+}
+
+// Certmanager retrieves the CertmanagerInternalversionClient
+func (c *Clientset) Certmanager() certmanagerinternalversion.CertmanagerInternalversionInterface {
+	return &fakecertmanagerinternalversion.FakeCertmanagerInternalversion{Fake: &c.Fake}
 }

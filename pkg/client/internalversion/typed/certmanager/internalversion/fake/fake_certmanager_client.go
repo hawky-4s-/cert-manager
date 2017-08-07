@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// +k8s:deepcopy-gen=package,register
-// +groupName=certmanager.k8s.io
+package fake
 
-// Package certmanager is the internal version of the API.
-package certmanager
+import (
+	internalversion "github.com/jetstack-experimental/cert-manager/pkg/client/internalversion/typed/certmanager/internalversion"
+)

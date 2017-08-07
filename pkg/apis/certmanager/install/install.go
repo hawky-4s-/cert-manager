@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/jetstack-experimental/cert-manager/pkg/apis/certmanager"
+	"github.com/jetstack-experimental/cert-manager/pkg/apis/certmanager/internalversion"
 	"github.com/jetstack-experimental/cert-manager/pkg/apis/certmanager/v1alpha1"
 )
 
@@ -31,7 +32,7 @@ func Install(groupFactoryRegistry announced.APIGroupFactoryRegistry, registry *r
 			GroupName:                  certmanager.GroupName,
 			VersionPreferenceOrder:     []string{v1alpha1.SchemeGroupVersion.Version},
 			ImportPrefix:               "github.com/jetstack-experimental/cert-manager/pkg/apis/certmanager",
-			AddInternalObjectsToScheme: certmanager.AddToScheme,
+			AddInternalObjectsToScheme: internalversion.AddToScheme,
 		},
 		announced.VersionToSchemeFunc{
 			v1alpha1.SchemeGroupVersion.Version: v1alpha1.AddToScheme,

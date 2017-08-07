@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package certmanager
+package internalversion
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -174,8 +174,6 @@ type LocalObjectReference struct {
 }
 
 type SecretKeySelector struct {
-	// The name of the secret in the pod's namespace to select from.
 	LocalObjectReference
-	// The key of the secret to select from.  Must be a valid secret key.
 	Key string
 }

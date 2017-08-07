@@ -143,16 +143,16 @@ $(BINDIR)/informer-gen:
 	$(BINDIR)/defaulter-gen \
 		--v 1 --logtostderr \
 		--go-header-file "$${GOPATH}/src/github.com/kubernetes/repo-infra/verify/boilerplate/boilerplate.go.txt" \
-		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager" \
+		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager/internalversion" \
 		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager/v1alpha1" \
-		--extra-peer-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager" \
+		--extra-peer-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager/internalversion" \
 		--extra-peer-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager/v1alpha1" \
 		--output-file-base "zz_generated.defaults"
 	# Generate deep copies
 	$(BINDIR)/deepcopy-gen \
 		--v 1 --logtostderr \
 		--go-header-file "$${GOPATH}/src/github.com/kubernetes/repo-infra/verify/boilerplate/boilerplate.go.txt" \
-		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager" \
+		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager/internalversion" \
 		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager/v1alpha1" \
 		--bounding-dirs "github.com/openshift/open-service-broker-sdk" \
 		--output-file-base zz_generated.deepcopy
@@ -160,7 +160,8 @@ $(BINDIR)/informer-gen:
 	$(BINDIR)/conversion-gen \
 		--v 1 --logtostderr \
 		--go-header-file "$${GOPATH}/src/github.com/kubernetes/repo-infra/verify/boilerplate/boilerplate.go.txt" \
-		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager" \
+		--extra-peer-dirs "k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/conversion,k8s.io/apimachinery/pkg/runtime" \
+		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager/internalversion" \
 		--input-dirs "$(PACKAGE_NAME)/pkg/apis/certmanager/v1alpha1" \
 		--output-file-base zz_generated.conversion
 	# generate all pkg/client contents
